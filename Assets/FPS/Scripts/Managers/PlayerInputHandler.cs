@@ -104,6 +104,10 @@ namespace PaintWars.FPS.Gameplay
             return 0f;
         }
 
+        /// <summary>
+        /// Gets whether the specified sprint key is being held.
+        /// </summary>
+        /// <returns>True if the sprint key is being held, false otherwise. </returns>
         public bool GetSprintInputHeld()
         {
             if (CanProcessInput())
