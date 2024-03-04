@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using PaintWars.FPS.Gameplay;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerCharacterController : MonoBehaviour
 {
@@ -56,6 +59,9 @@ public class PlayerCharacterController : MonoBehaviour
     public float FallDamageAtMinSpeed = 10f;
 
     [Tooltip("Damage recieved when falling at the maximum speed")]
+
+
+    private PlayerInput m_PlayerInput;
     public float FallDamageAtMaxSpeed = 50f;
 
     public Vector3 characterVelocity { get; set; }
@@ -71,14 +77,14 @@ public class PlayerCharacterController : MonoBehaviour
         }
     }
 
-    PlayerInputHandler m_InputHandler;
+    //PlayerInputHandler m_InputHandler;
     CharacterController m_Controller;
+    PlayerInputContainer m_InputContainer;
     Vector3 m_GroundNormal;
     float m_LastTimeJumped = 0f;
-    float m_CharacterHeight = 1.8f;
     float m_CameraVerticalAngle = 0f;
 
-    const float k_GroundCheckDistanceInAir = 0.07f;
+    const float k_GroundCheckDistanceInAir = 0.08f;
     const float k_JumpGroundingPreventionTime = 0.2f;
 
     void Awake()
@@ -92,7 +98,11 @@ public class PlayerCharacterController : MonoBehaviour
         m_Controller = GetComponent<CharacterController>();
         m_Controller.enableOverlapRecovery = true;
 
-        m_InputHandler = GetComponent<PlayerInputHandler>();
+        m_PlayerInput = GetComponent<PlayerInput>();
+
+        //m_InputHandler = GetComponent<PlayerInputHandler>();
+        m_InputContainer = GetComponent<PlayerInputContainer>();
+        characterVelocity = new Vector3(0, 0, 0);
     }
 
     // Update is called once per frame
@@ -100,8 +110,9 @@ public class PlayerCharacterController : MonoBehaviour
     {
         bool wasGrounded = isGrounded;
         GroundCheck();
+        Debug.Log(isGrounded);
 
-        UpdateCharacterHeight(false);
+        //UpdateCharacterHeight(false);
 
         HandleCharacterMovement();
     }
@@ -112,15 +123,15 @@ public class PlayerCharacterController : MonoBehaviour
         {
             m_Controller.height = 1.8f;
             m_Controller.center = Vector3.up * m_Controller.height * 0.5f;
-            playerCamera.transform.localPosition = Vector3.up * m_CharacterHeight;
+            playerCamera.transform.localPosition = Vector3.up * CapsuleHeightStanding;
 
         }
-        else if (m_Controller.height! != m_CharacterHeight)
+        else if (m_Controller.height! != CapsuleHeightStanding)
         {
-            m_Controller.height = Mathf.Lerp(m_Controller.height, m_CharacterHeight, Time.deltaTime);
+            m_Controller.height = Mathf.Lerp(m_Controller.height, CapsuleHeightStanding, Time.deltaTime);
             m_Controller.center = Vector3.up * m_Controller.height * 0.5f;
             playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition,
-            Vector3.up * m_CharacterHeight * CameraHeightRatio, Time.deltaTime);
+            Vector3.up * CapsuleHeightStanding * CameraHeightRatio, Time.deltaTime);
         }
     }
 
@@ -136,23 +147,33 @@ public class PlayerCharacterController : MonoBehaviour
 
     void GroundCheck()
     {
-        float chosenGroundCheckDistence = isGrounded ? (m_Controller.skinWidth + groundCheckDistance) : k_GroundCheckDistanceInAir;
+        float chosenGroundCheckDistance = isGrounded ? (m_Controller.skinWidth + groundCheckDistance) : k_GroundCheckDistanceInAir;
 
         isGrounded = false;
         m_GroundNormal = Vector3.up;
 
         if (Time.time >= m_LastTimeJumped + k_JumpGroundingPreventionTime)
         {
-            Vector3 p1 = transform.position + m_Controller.center + Vector3.up * -m_Controller.height * 0.5F;
-            Vector3 p2 = p1 + Vector3.up * m_Controller.height;
+            Vector3 p1 = transform.position + m_Controller.center + Vector3.up * -m_Controller.height * 0.5F + new Vector3(0, m_Controller.radius, 0);
+            Vector3 p2 = p1 + Vector3.up * m_Controller.height - new Vector3(0, m_Controller.radius, 0);
+            Debug.DrawLine(p1, p1 + Vector3.down * chosenGroundCheckDistance, Color.green, 1);
+
             if (Physics.CapsuleCast(p1, p2, m_Controller.radius, Vector3.down,
-                out RaycastHit hit, chosenGroundCheckDistence, groundCheckLayers,
+                out RaycastHit hit, chosenGroundCheckDistance, groundCheckLayers,
                 QueryTriggerInteraction.Ignore))
             {
+                Debug.Log("Ray hit");
                 m_GroundNormal = hit.normal;
                 if (Vector3.Dot(m_GroundNormal, transform.up) > 0f && IsNormalUnderSlopeLimit(m_GroundNormal))
                 {
-                    m_Controller.Move(Vector3.down * hit.distance);
+                    isGrounded = true;
+
+                    // handle snapping to the ground
+                    if (hit.distance > m_Controller.skinWidth)
+                    {
+                        m_Controller.Move(Vector3.down * hit.distance);
+
+                    }
                 }
 
             }
@@ -162,26 +183,40 @@ public class PlayerCharacterController : MonoBehaviour
     void HandleCharacterMovement()
     {
         // Horizontal character rotation
-        transform.Rotate(new Vector3(0f, (m_InputHandler.GetLookInputsHorizontal() * RotationSpeed * rotationMultiplier), 0f), Space.Self);
+        transform.Rotate(new Vector3(0f, (m_InputContainer.lookVector.x * RotationSpeed * rotationMultiplier), 0f), Space.Self);
 
         // Vertical camera rotation
-        m_CameraVerticalAngle += m_InputHandler.GetLookInputsVertical() * RotationSpeed * rotationMultiplier;
+        m_CameraVerticalAngle += m_InputContainer.lookVector.y * RotationSpeed * rotationMultiplier;
         m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -89f, 89f);
         playerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0f, 0f);
 
-        bool isSprinting = m_InputHandler.GetSprintInputHeld();
-        float speedModifier = isSprinting ? sprintSpeedModifier : 1f;
+        //bool isSprinting = m_InputHandler.GetSprintInputHeld();
+        //float speedModifier = isSprinting ? sprintSpeedModifier : 1f;
 
         // Converts move input into worldspace vector
-        Vector3 worldSpaceMove = transform.TransformVector(m_InputHandler.GetMoveInput());
+        characterVelocity = transform.TransformVector(new Vector3(m_InputContainer.characterMovementTransform.x, characterVelocity.y, m_InputContainer.characterMovementTransform.z));
         if (isGrounded)
         {
-            Vector3 targetVelocity = worldSpaceMove * maxSpeedOnGround * speedModifier;
-            targetVelocity = ReorientToSlopeDirection(targetVelocity, m_GroundNormal) * targetVelocity.magnitude;
 
+            characterVelocity *= maxSpeedOnGround;
+            characterVelocity = ReorientToSlopeDirection(characterVelocity, m_GroundNormal) * characterVelocity.magnitude;
 
+            if (m_InputContainer.jumped)
+            {
+                m_LastTimeJumped = Time.time;
+                characterVelocity += Vector3.up * JumpForce;
+                m_InputContainer.resetJump();
+            }
 
         }
+
+        else
+        {
+            characterVelocity = new Vector3(characterVelocity.x * maxSpeedInAir, characterVelocity.y, characterVelocity.z * maxSpeedInAir);
+            characterVelocity += Vector3.down * gravityDownForce * Time.deltaTime;
+            Debug.Log(characterVelocity.y);
+        }
+        m_Controller.Move(characterVelocity * Time.deltaTime);
     }
 
     public Vector3 ReorientToSlopeDirection(Vector3 direction, Vector3 slopeNormal)
