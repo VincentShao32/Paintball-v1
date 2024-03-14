@@ -122,6 +122,7 @@ namespace PaintWars.FPS.Game
         Vector3 m_LastMuzzlePosition;
 
         public GameObject Owner { get; set; }
+        public GameObject SourcePrefab { get; set; }
 
         float m_LastTimeShot = Mathf.NegativeInfinity;
 
