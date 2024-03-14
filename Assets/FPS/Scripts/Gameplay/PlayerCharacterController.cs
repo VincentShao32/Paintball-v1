@@ -61,7 +61,6 @@ public class PlayerCharacterController : MonoBehaviour
     [Tooltip("Damage recieved when falling at the maximum speed")]
 
 
-    private PlayerInput m_PlayerInput;
     public float FallDamageAtMaxSpeed = 50f;
 
     public Vector3 characterVelocity { get; set; }
@@ -97,8 +96,6 @@ public class PlayerCharacterController : MonoBehaviour
     {
         m_Controller = GetComponent<CharacterController>();
         m_Controller.enableOverlapRecovery = true;
-
-        m_PlayerInput = GetComponent<PlayerInput>();
 
         //m_InputHandler = GetComponent<PlayerInputHandler>();
         m_InputContainer = GetComponent<PlayerInputContainer>();
@@ -183,21 +180,22 @@ public class PlayerCharacterController : MonoBehaviour
     void HandleCharacterMovement()
     {
         // Horizontal character rotation
-        transform.Rotate(new Vector3(0f, (m_InputContainer.lookVector.x * RotationSpeed * rotationMultiplier), 0f), Space.Self);
+        transform.Rotate(new Vector3(0f, m_InputContainer.lookVector.x * RotationSpeed * rotationMultiplier, 0f), Space.Self);
 
         // Vertical camera rotation
         m_CameraVerticalAngle += m_InputContainer.lookVector.y * RotationSpeed * rotationMultiplier;
         m_CameraVerticalAngle = Mathf.Clamp(m_CameraVerticalAngle, -89f, 89f);
         playerCamera.transform.localEulerAngles = new Vector3(m_CameraVerticalAngle, 0f, 0f);
 
-        //bool isSprinting = m_InputHandler.GetSprintInputHeld();
-        //float speedModifier = isSprinting ? sprintSpeedModifier : 1f;
-
         // Converts move input into worldspace vector
-        characterVelocity = transform.TransformVector(new Vector3(m_InputContainer.characterMovementTransform.x, characterVelocity.y, m_InputContainer.characterMovementTransform.z));
+        characterVelocity = transform.TransformVector(new Vector3(
+            m_InputContainer.characterMovementTransform.x,
+            characterVelocity.y,
+            m_InputContainer.characterMovementTransform.z
+        ));
         if (isGrounded)
         {
-
+            characterVelocity -= Vector3.up * characterVelocity.y;
             characterVelocity *= maxSpeedOnGround;
             characterVelocity = ReorientToSlopeDirection(characterVelocity, m_GroundNormal) * characterVelocity.magnitude;
 
@@ -214,8 +212,8 @@ public class PlayerCharacterController : MonoBehaviour
         {
             characterVelocity = new Vector3(characterVelocity.x * maxSpeedInAir, characterVelocity.y, characterVelocity.z * maxSpeedInAir);
             characterVelocity += Vector3.down * gravityDownForce * Time.deltaTime;
-            Debug.Log(characterVelocity.y);
         }
+        Debug.Log(characterVelocity);
         m_Controller.Move(characterVelocity * Time.deltaTime);
     }
 

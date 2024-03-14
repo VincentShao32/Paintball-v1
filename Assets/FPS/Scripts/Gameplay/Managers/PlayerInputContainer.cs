@@ -4,6 +4,7 @@ using UnityEngine;
 using PaintWars.FPS.Game;
 using UnityEngine.InputSystem;
 using System;
+
 namespace PaintWars.FPS.Gameplay
 {
     public class PlayerInputContainer : MonoBehaviour
@@ -24,6 +25,7 @@ namespace PaintWars.FPS.Gameplay
         public Vector3 characterMovementTransform { get; set; }
         public Vector2 lookVector { get; set; }
         public bool jumped { get; set; }
+        public bool shot { get; private set; }
 
         [Tooltip("Jump force of the player")]
         public float jumpForce;
@@ -68,7 +70,6 @@ namespace PaintWars.FPS.Gameplay
         /// <param name="context">The input value from PlayerInput. Supposed to be a Vector2 for movement.</param>
         public void OnMove(InputAction.CallbackContext context)
         {
-            Console.WriteLine("move input detected");
             Vector2 input = context.ReadValue<Vector2>();
             characterMovementTransform = new Vector3(input.x, 0, input.y);
         }
@@ -94,20 +95,19 @@ namespace PaintWars.FPS.Gameplay
             }
         }
 
-
-        /// <summary>
-        /// Gets whether the specified sprint key is being held.
-        /// </summary>
-        /// <returns>True if the sprint key is being held, false otherwise. </returns>
-        public bool GetSprintInputHeld()
+        public void OnShoot(InputAction.CallbackContext context)
         {
-            if (CanProcessInput())
+            if (context.started)
             {
-                return Input.GetButton(GameConstants.k_ButtonNameSprint);
+                shot = true;
             }
-
-            return false;
         }
+
+        public void resetShot()
+        {
+            shot = false;
+        }
+
 
         public void resetJump()
         {
