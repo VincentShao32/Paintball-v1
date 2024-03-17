@@ -5,7 +5,7 @@ using PaintWars.FPS.Gameplay;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace PaintWards.FPS.Gameplay
+namespace PaintWars.FPS.Gameplay
 {
     public class PlayerWeaponsManager : MonoBehaviour
     {
@@ -113,8 +113,10 @@ namespace PaintWards.FPS.Gameplay
 
             foreach (var weapon in StartingWeapons)
             {
-
+                AddWeapon(weapon);
             }
+
+            SwitchWeapon(true);
         }
 
         // Update is called once per frame
@@ -126,7 +128,42 @@ namespace PaintWards.FPS.Gameplay
             {
                 return;
             }
+            if (activeWeapon != null && m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                if (!activeWeapon.AutomaticReload && m_InputContainer.reload && activeWeapon.CurrentAmmoRatio < 1.0f)
+                {
+                    IsAiming = false;
+                    return;
+                }
+
+                // handle aiming down sights
+                //IsAiming = m_InputContainer.
+
+                // handle shooting
+                bool hasFired = activeWeapon.HandleShootInputs(m_InputContainer.shot, m_InputContainer.shootHeld);
+
+                if (hasFired)
+                {
+                    m_AccumulatedRecoil += Vector3.back * activeWeapon.RecoilForce;
+                    m_AccumulatedRecoil = Vector3.ClampMagnitude(m_AccumulatedRecoil, MaxRecoilDistance);
+                }
+            }
+
+            // weapon switch handling
+            if (!IsAiming && activeWeapon == null && (m_WeaponSwitchState == WeaponSwitchState.Up || m_WeaponSwitchState == WeaponSwitchState.Down))
+            {
+            }
+
+            // Pointing at enemy handling
+            IsPointingAtEnemy = false;
+            if (activeWeapon)
+            {
+                if (Physics.Raycast(WeaponCamera.transform.position, WeaponCamera.transform.forward, out RaycastHit hit, 1000, -1, QueryTriggerInteraction.Ignore))
+                {
+                }
+            }
         }
+
 
         public bool AddWeapon(WeaponController weaponPrefab)
         {

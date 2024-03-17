@@ -26,6 +26,9 @@ namespace PaintWars.FPS.Gameplay
         public Vector2 lookVector { get; set; }
         public bool jumped { get; set; }
         public bool shot { get; private set; }
+        public bool shootHeld { get; private set; }
+        public bool reload { get; private set; }
+        public bool switchWeapon { get; private set; }
 
         [Tooltip("Jump force of the player")]
         public float jumpForce;
@@ -97,17 +100,51 @@ namespace PaintWars.FPS.Gameplay
 
         public void OnShoot(InputAction.CallbackContext context)
         {
+            if (context.action.IsPressed())
+            {
+                shootHeld = true;
+            }
+            else
+            {
+                shootHeld = false;
+            }
             if (context.started)
             {
                 shot = true;
             }
+            else
+            {
+                shot = false;
+            }
         }
 
+        public void OnReload(InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                reload = true;
+            }
+        }
+
+        public void OnSwitchWeapon(InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                switchWeapon = true;
+            }
+            else
+            {
+                switchWeapon = false;
+            }
+        }
+        public void resetReload()
+        {
+            reload = false;
+        }
         public void resetShot()
         {
             shot = false;
         }
-
 
         public void resetJump()
         {

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace PaintWars.FPS.Game
@@ -118,6 +119,8 @@ namespace PaintWars.FPS.Game
         [Tooltip("Unparent the muzzle flash instance on spawn")]
         public bool UnparentMuzzleFlash;
 
+        bool m_WantsToShoot = false;
+
         float m_CurrentAmmo;
         Vector3 m_LastMuzzlePosition;
 
@@ -154,6 +157,28 @@ namespace PaintWars.FPS.Game
             {
                 MuzzleWorldVelocity = (WeaponMuzzle.position - m_LastMuzzlePosition) / Time.deltaTime;
                 m_LastMuzzlePosition = WeaponMuzzle.position;
+            }
+        }
+
+        public bool HandleShootInputs(bool inputDown, bool inputHeld)
+        {
+            m_WantsToShoot = inputDown || inputHeld;
+            switch (ShootType)
+            {
+                case WeaponShootType.Manual:
+                    if (inputDown)
+                    {
+                        return TryShoot();
+                    }
+                    return false;
+                case WeaponShootType.Automatic:
+                    if (inputHeld)
+                    {
+                        return TryShoot();
+                    }
+                    return false;
+                default:
+                    return false;
             }
         }
 
