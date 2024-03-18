@@ -102,6 +102,7 @@ namespace PaintWars.FPS.Gameplay
         {
             if (context.action.IsPressed())
             {
+                Debug.Log("shoot is pressed");
                 shootHeld = true;
             }
             else
@@ -116,6 +117,7 @@ namespace PaintWars.FPS.Gameplay
             {
                 shot = false;
             }
+            Debug.Log(shootHeld);
         }
 
         public void OnReload(InputAction.CallbackContext context)

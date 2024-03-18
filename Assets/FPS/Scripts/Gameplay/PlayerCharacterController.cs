@@ -107,7 +107,6 @@ public class PlayerCharacterController : MonoBehaviour
     {
         bool wasGrounded = isGrounded;
         GroundCheck();
-        Debug.Log(isGrounded);
 
         //UpdateCharacterHeight(false);
 
@@ -159,7 +158,6 @@ public class PlayerCharacterController : MonoBehaviour
                 out RaycastHit hit, chosenGroundCheckDistance, groundCheckLayers,
                 QueryTriggerInteraction.Ignore))
             {
-                Debug.Log("Ray hit");
                 m_GroundNormal = hit.normal;
                 if (Vector3.Dot(m_GroundNormal, transform.up) > 0f && IsNormalUnderSlopeLimit(m_GroundNormal))
                 {
@@ -213,7 +211,6 @@ public class PlayerCharacterController : MonoBehaviour
             characterVelocity = new Vector3(characterVelocity.x * maxSpeedInAir, characterVelocity.y, characterVelocity.z * maxSpeedInAir);
             characterVelocity += Vector3.down * gravityDownForce * Time.deltaTime;
         }
-        Debug.Log(characterVelocity);
         m_Controller.Move(characterVelocity * Time.deltaTime);
     }
 

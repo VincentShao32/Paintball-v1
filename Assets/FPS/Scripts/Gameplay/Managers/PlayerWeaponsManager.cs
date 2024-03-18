@@ -160,8 +160,25 @@ namespace PaintWars.FPS.Gameplay
             {
                 if (Physics.Raycast(WeaponCamera.transform.position, WeaponCamera.transform.forward, out RaycastHit hit, 1000, -1, QueryTriggerInteraction.Ignore))
                 {
+                    if (hit.collider.GetComponentInParent<Health>() != null)
+                    {
+                        IsPointingAtEnemy = true;
+                    }
                 }
             }
+        }
+
+        // Update various animated features in LateUpdate because it needs to override the animated arm position
+        void LateUpdate()
+        {
+            UpdateWeaponAiming();
+            UpdateWeaponBob();
+            UpdateWeaponRecoil();
+            UpdateWeaponSwitching();
+
+            // Set final weapon socket position based on all the combined animation influences
+            WeaponParentSocket.localPosition =
+                m_WeaponMainLocalPosition + m_WeaponBobLocalPosition + m_WeaponRecoilLocalPosition;
         }
 
 
@@ -204,6 +221,8 @@ namespace PaintWars.FPS.Gameplay
                     return true;
                 }
             }
+
+            // Handle auto-switching to weapon if no weapons currently
             if (GetActiveWeapon() == null)
             {
                 SwitchWeapon(true);
@@ -331,6 +350,147 @@ namespace PaintWars.FPS.Gameplay
             if (newWeapon != null)
             {
                 newWeapon.ShowWeapon(true);
+            }
+        }
+
+        void UpdateWeaponAiming()
+        {
+            if (m_WeaponSwitchState == WeaponSwitchState.Up)
+            {
+                WeaponController activeWeapon = GetActiveWeapon();
+                if (IsAiming && activeWeapon)
+                {
+                    m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition, AimingWeaponPosition.localPosition + activeWeapon.AimOffset,
+                        AimingAnimationSpeed * Time.deltaTime);
+                    SetFov(Mathf.Lerp(m_PlayerCharacterController.playerCamera.fieldOfView,
+                        activeWeapon.AimZoomRatio * DefaultFov, AimingAnimationSpeed * Time.deltaTime));
+                }
+                else
+                {
+                    m_WeaponMainLocalPosition = Vector3.Lerp(m_WeaponMainLocalPosition,
+                        DefaultWeaponPosition.localPosition, AimingAnimationSpeed * Time.deltaTime);
+                    SetFov(Mathf.Lerp(m_PlayerCharacterController.playerCamera.fieldOfView, DefaultFov,
+                        AimingAnimationSpeed * Time.deltaTime));
+                }
+            }
+        }
+
+        // Updates the weapon bob animation based on character speed
+        void UpdateWeaponBob()
+        {
+            if (Time.deltaTime > 0f)
+            {
+                Vector3 playerCharacterVelocity =
+                    (m_PlayerCharacterController.transform.position - m_LastCharacterPosition) / Time.deltaTime;
+
+                // calculate a smoothed weapon bob amount based on how close to our max grounded movement velocity we are
+                float characterMovementFactor = 0f;
+                if (m_PlayerCharacterController.isGrounded)
+                {
+                    characterMovementFactor =
+                        Mathf.Clamp01(playerCharacterVelocity.magnitude /
+                                      (m_PlayerCharacterController.maxSpeedOnGround *
+                                       m_PlayerCharacterController.sprintSpeedModifier));
+                }
+
+                m_WeaponBobFactor =
+                    Mathf.Lerp(m_WeaponBobFactor, characterMovementFactor, BobSharpness * Time.deltaTime);
+
+                // Calculate vertical and horizontal weapon bob values based on a sine function
+                float bobAmount = IsAiming ? AimingBobAmount : DefaultBobAmount;
+                float frequency = BobFrequency;
+                float hBobValue = Mathf.Sin(Time.time * frequency) * bobAmount * m_WeaponBobFactor;
+                float vBobValue = ((Mathf.Sin(Time.time * frequency * 2f) * 0.5f) + 0.5f) * bobAmount *
+                                  m_WeaponBobFactor;
+
+                // Apply weapon bob
+                m_WeaponBobLocalPosition.x = hBobValue;
+                m_WeaponBobLocalPosition.y = Mathf.Abs(vBobValue);
+
+                m_LastCharacterPosition = m_PlayerCharacterController.transform.position;
+            }
+        }
+
+        // Updates the weapon recoil animation
+        void UpdateWeaponRecoil()
+        {
+            // if the accumulated recoil is further away from the current position, make the current position move towards the recoil target
+            if (m_WeaponRecoilLocalPosition.z >= m_AccumulatedRecoil.z * 0.99f)
+            {
+                m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, m_AccumulatedRecoil,
+                    RecoilSharpness * Time.deltaTime);
+            }
+            // otherwise, move recoil position to make it recover towards its resting pose
+            else
+            {
+                m_WeaponRecoilLocalPosition = Vector3.Lerp(m_WeaponRecoilLocalPosition, Vector3.zero,
+                    RecoilRestitutionSharpness * Time.deltaTime);
+                m_AccumulatedRecoil = m_WeaponRecoilLocalPosition;
+            }
+        }
+
+        // Updates the animated transition of switching weaepons
+        void UpdateWeaponSwitching()
+        {
+            // Calculate the time ratio (0 to 1) since weapon switch was triggered
+            float switchingTimeFactor = 0f;
+            if (WeaponSwitchDelay == 0f)
+            {
+                switchingTimeFactor = 1f;
+            }
+            else
+            {
+                switchingTimeFactor = Mathf.Clamp01((Time.time - m_TimeStartedWeaponSwitch) / WeaponSwitchDelay);
+            }
+
+            // Handle transiting to new switch state
+            if (switchingTimeFactor >= 1f)
+            {
+                if (m_WeaponSwitchState == WeaponSwitchState.PutDownPrevious)
+                {
+                    // Deactivate old weapon
+                    WeaponController oldWeapon = GetWeaponAtSlotIndex(ActiveWeaponIndex);
+                    if (oldWeapon != null)
+                    {
+                        oldWeapon.ShowWeapon(false);
+                    }
+                    ActiveWeaponIndex = m_WeaponSwitchNewWeaponIndex;
+                    switchingTimeFactor = 0f;
+
+                    // Activate new weapon
+                    WeaponController newWeapon = GetWeaponAtSlotIndex(ActiveWeaponIndex);
+                    if (OnSwitchedToWeapon != null)
+                    {
+                        OnSwitchedToWeapon.Invoke(newWeapon);
+                    }
+
+                    if (newWeapon)
+                    {
+                        m_TimeStartedWeaponSwitch = Time.time;
+                        m_WeaponSwitchState = WeaponSwitchState.PutUpNew;
+                    }
+                    else
+                    {
+                        // if new weapon is null, don't follow through with putting weapon back up'
+                        m_WeaponSwitchState = WeaponSwitchState.Down;
+                    }
+                }
+                else if (m_WeaponSwitchState == WeaponSwitchState.PutUpNew)
+                {
+                    m_WeaponSwitchState = WeaponSwitchState.Up;
+                }
+
+                // Handle moving the weapon socket position for the animated weapon switching
+                if (m_WeaponSwitchState == WeaponSwitchState.PutDownPrevious)
+                {
+                    m_WeaponMainLocalPosition = Vector3.Lerp(DefaultWeaponPosition.localPosition,
+                        DownWeaponPosition.localPosition, switchingTimeFactor);
+                }
+                else if (m_WeaponSwitchState == WeaponSwitchState.PutUpNew)
+                {
+                    m_WeaponMainLocalPosition = Vector3.Lerp(DownWeaponPosition.localPosition,
+                        DefaultWeaponPosition.localPosition, switchingTimeFactor);
+                }
             }
         }
     }

@@ -123,12 +123,14 @@ namespace PaintWars.FPS.Game
 
         float m_CurrentAmmo;
         Vector3 m_LastMuzzlePosition;
+        int m_CarriedPhysicalBullets;
 
         public GameObject Owner { get; set; }
         public GameObject SourcePrefab { get; set; }
 
         float m_LastTimeShot = Mathf.NegativeInfinity;
 
+        public int GetCarriedPhysicalBullets() => m_CarriedPhysicalBullets;
         public int GetCurrentAmmo() => Mathf.FloorToInt(m_CurrentAmmo);
 
         public bool IsReloading { get; private set; }
@@ -136,6 +138,7 @@ namespace PaintWars.FPS.Game
         public float CurrentAmmoRatio { get; private set; }
         public bool IsWeaponActive { get; private set; }
         public Vector3 MuzzleWorldVelocity { get; private set; }
+
 
         void Awake()
         {
@@ -182,6 +185,8 @@ namespace PaintWars.FPS.Game
             }
         }
 
+        public void AddCarriablePhysicalBullets(int count) => m_CarriedPhysicalBullets = Mathf.Max(m_CarriedPhysicalBullets + count, MaxAmmo);
+
         void UpdateAmmo()
         {
             if (AutomaticReload && m_LastTimeShot + AmmoReloadDelay < Time.time && m_CurrentAmmo < MaxAmmo)
@@ -220,6 +225,7 @@ namespace PaintWars.FPS.Game
 
         bool TryShoot()
         {
+            Debug.Log("Tried to shoot");
             if (m_CurrentAmmo >= 1f && m_LastTimeShot + DelayBetweenShots < Time.time)
             {
                 HandleShoot();
@@ -240,6 +246,11 @@ namespace PaintWars.FPS.Game
                 newProjectile.Shoot(this);
             }
 
+            if (HasPhysicalBullets)
+            {
+                m_CarriedPhysicalBullets--;
+            }
+            m_LastTimeShot = Time.time;
         }
 
         public Vector3 GetShotDirectionWithinSpread(Transform shootTransform)
