@@ -71,6 +71,24 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchTo1"",
+                    ""type"": ""Button"",
+                    ""id"": ""6a57ec5a-2774-486e-9b0c-dda5f4e18f55"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchTo2"",
+                    ""type"": ""Button"",
+                    ""id"": ""5d863470-cc64-4a29-b72d-ed3b637f9ec1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -172,6 +190,28 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""action"": ""Shoot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""47859201-fa78-499c-b3a6-b5280454e5d8"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchTo1"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""49676dd1-a60e-49cf-93a0-8e965c29a3c4"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchTo2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -185,6 +225,8 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_gameplay_Sprint = m_gameplay.FindAction("Sprint", throwIfNotFound: true);
         m_gameplay_Look = m_gameplay.FindAction("Look", throwIfNotFound: true);
         m_gameplay_Shoot = m_gameplay.FindAction("Shoot", throwIfNotFound: true);
+        m_gameplay_SwitchTo1 = m_gameplay.FindAction("SwitchTo1", throwIfNotFound: true);
+        m_gameplay_SwitchTo2 = m_gameplay.FindAction("SwitchTo2", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -251,6 +293,8 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_gameplay_Sprint;
     private readonly InputAction m_gameplay_Look;
     private readonly InputAction m_gameplay_Shoot;
+    private readonly InputAction m_gameplay_SwitchTo1;
+    private readonly InputAction m_gameplay_SwitchTo2;
     public struct GameplayActions
     {
         private @PlayerControls m_Wrapper;
@@ -260,6 +304,8 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         public InputAction @Sprint => m_Wrapper.m_gameplay_Sprint;
         public InputAction @Look => m_Wrapper.m_gameplay_Look;
         public InputAction @Shoot => m_Wrapper.m_gameplay_Shoot;
+        public InputAction @SwitchTo1 => m_Wrapper.m_gameplay_SwitchTo1;
+        public InputAction @SwitchTo2 => m_Wrapper.m_gameplay_SwitchTo2;
         public InputActionMap Get() { return m_Wrapper.m_gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -284,6 +330,12 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Shoot.started += instance.OnShoot;
             @Shoot.performed += instance.OnShoot;
             @Shoot.canceled += instance.OnShoot;
+            @SwitchTo1.started += instance.OnSwitchTo1;
+            @SwitchTo1.performed += instance.OnSwitchTo1;
+            @SwitchTo1.canceled += instance.OnSwitchTo1;
+            @SwitchTo2.started += instance.OnSwitchTo2;
+            @SwitchTo2.performed += instance.OnSwitchTo2;
+            @SwitchTo2.canceled += instance.OnSwitchTo2;
         }
 
         private void UnregisterCallbacks(IGameplayActions instance)
@@ -303,6 +355,12 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Shoot.started -= instance.OnShoot;
             @Shoot.performed -= instance.OnShoot;
             @Shoot.canceled -= instance.OnShoot;
+            @SwitchTo1.started -= instance.OnSwitchTo1;
+            @SwitchTo1.performed -= instance.OnSwitchTo1;
+            @SwitchTo1.canceled -= instance.OnSwitchTo1;
+            @SwitchTo2.started -= instance.OnSwitchTo2;
+            @SwitchTo2.performed -= instance.OnSwitchTo2;
+            @SwitchTo2.canceled -= instance.OnSwitchTo2;
         }
 
         public void RemoveCallbacks(IGameplayActions instance)
@@ -327,5 +385,7 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         void OnSprint(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
+        void OnSwitchTo1(InputAction.CallbackContext context);
+        void OnSwitchTo2(InputAction.CallbackContext context);
     }
 }

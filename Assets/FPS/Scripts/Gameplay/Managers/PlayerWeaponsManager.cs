@@ -152,6 +152,16 @@ namespace PaintWars.FPS.Gameplay
             // weapon switch handling
             if (!IsAiming && activeWeapon == null && (m_WeaponSwitchState == WeaponSwitchState.Up || m_WeaponSwitchState == WeaponSwitchState.Down))
             {
+                if (m_InputContainer.switchTo1)
+                {
+                    SwitchToWeaponIndex(0);
+                    m_InputContainer.resetSwitchTo1();
+                }
+                else if (m_InputContainer.switchTo2)
+                {
+                    SwitchToWeaponIndex(1);
+                    m_InputContainer.resetSwitchTo2();
+                }
             }
 
             // Pointing at enemy handling
@@ -289,12 +299,13 @@ namespace PaintWars.FPS.Gameplay
                         OnSwitchedToWeapon.Invoke(newWeapon);
                     }
                 }
+                // otherwise, remember we are putting down our current weapon for switching to the next one
+                else
+                {
+                    m_WeaponSwitchState = WeaponSwitchState.PutDownPrevious;
+                }
             }
-            // otherwise, remember we are putting down our current weapon for switching to the next one
-            else
-            {
-                m_WeaponSwitchState = WeaponSwitchState.PutDownPrevious;
-            }
+
         }
 
         // Calculates the "distance" between two weapon slot indexes

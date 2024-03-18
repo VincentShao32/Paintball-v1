@@ -28,20 +28,6 @@ namespace PaintWars.FPS.Game
             CurrentHealth = MaxHealth;
         }
 
-        public void Heal(float healAmount)
-        {
-            float healthBefore = CurrentHealth;
-            CurrentHealth += healAmount;
-            CurrentHealth = Mathf.Clamp(CurrentHealth, 0f, MaxHealth);
-
-            // call OnHeal action
-            float trueHealAmount = CurrentHealth - healthBefore;
-            if (trueHealAmount > 0f)
-            {
-                OnHealed?.Invoke(trueHealAmount);
-            }
-        }
-
         public void TakeDamage(float damage, GameObject damageSource)
         {
             if (Invincible)
@@ -60,17 +46,6 @@ namespace PaintWars.FPS.Game
 
             HandleDeath();
         }
-
-        public void Kill()
-        {
-            CurrentHealth = 0f;
-
-            // call OnDamage action
-            OnDamaged?.Invoke(MaxHealth, null);
-
-            HandleDeath();
-        }
-
         void HandleDeath()
         {
             if (m_IsDead)

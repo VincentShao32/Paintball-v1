@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using PaintWars.FPS.Game;
 using PaintWars.FPS.Gameplay;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -77,6 +78,7 @@ public class PlayerCharacterController : MonoBehaviour
     }
 
     //PlayerInputHandler m_InputHandler;
+    Health m_Health;
     CharacterController m_Controller;
     PlayerInputContainer m_InputContainer;
     Vector3 m_GroundNormal;
@@ -100,45 +102,23 @@ public class PlayerCharacterController : MonoBehaviour
         //m_InputHandler = GetComponent<PlayerInputHandler>();
         m_InputContainer = GetComponent<PlayerInputContainer>();
         characterVelocity = new Vector3(0, 0, 0);
+        m_Health = GetComponent<Health>();
+        m_Health.OnDie += OnDie;
     }
 
     // Update is called once per frame
     void Update()
     {
-        bool wasGrounded = isGrounded;
         GroundCheck();
 
-        //UpdateCharacterHeight(false);
-
         HandleCharacterMovement();
+
     }
 
-    void UpdateCharacterHeight(bool force)
+    void OnDie()
     {
-        if (force)
-        {
-            m_Controller.height = 1.8f;
-            m_Controller.center = Vector3.up * m_Controller.height * 0.5f;
-            playerCamera.transform.localPosition = Vector3.up * CapsuleHeightStanding;
-
-        }
-        else if (m_Controller.height! != CapsuleHeightStanding)
-        {
-            m_Controller.height = Mathf.Lerp(m_Controller.height, CapsuleHeightStanding, Time.deltaTime);
-            m_Controller.center = Vector3.up * m_Controller.height * 0.5f;
-            playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition,
-            Vector3.up * CapsuleHeightStanding * CameraHeightRatio, Time.deltaTime);
-        }
-    }
-
-    Vector3 GetCapsuleBottomHemisphere()
-    {
-        return transform.position + (transform.up * m_Controller.radius);
-    }
-
-    Vector3 GetCapsuleUpperHemisphere(float atHeight)
-    {
-        return transform.position + (transform.up * (atHeight - m_Controller.radius));
+        isDead = true;
+        this.enabled = false;
     }
 
     void GroundCheck()
@@ -170,7 +150,6 @@ public class PlayerCharacterController : MonoBehaviour
 
                     }
                 }
-
             }
         }
     }

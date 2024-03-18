@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 5959689879404808924}
   - component: {fileID: 8881380282555668914}
   m_Layer: 0
-  m_Name: Paintball
+  m_Name: Enemy Paintball
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -134,11 +134,11 @@ MonoBehaviour:
   MaxLifeTime: 5
   HittableLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 64
   Speed: 300
   GravityDownAcceleration: 1
   TrajectoryCorrectionDistance: 5
   InheritWeaponVelocity: 0
-  Damage: 25
+  Damage: 5
   AreaOfDamage: {fileID: 0}
   RadiusColor: {r: 0, g: 1, b: 1, a: 0.2}

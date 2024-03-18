@@ -1,14 +1,15 @@
 using PaintWars.FPS.Game;
 using PaintWars.FPS.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Unity.FPS.UI
 {
-    public class PlayerHealthBar : MonoBehaviour
+    public class PlayerHealth : MonoBehaviour
     {
-        [Tooltip("Image component dispplaying current health")]
-        public Image HealthFillImage;
+        [Tooltip("Text component displaying current health")]
+        public TextMeshProUGUI currentHealth;
 
         Health m_PlayerHealth;
 
@@ -25,7 +26,7 @@ namespace Unity.FPS.UI
         void Update()
         {
             // update health bar value
-            HealthFillImage.fillAmount = m_PlayerHealth.CurrentHealth / m_PlayerHealth.MaxHealth;
+            currentHealth.text = m_PlayerHealth.CurrentHealth.ToString();
         }
     }
 }

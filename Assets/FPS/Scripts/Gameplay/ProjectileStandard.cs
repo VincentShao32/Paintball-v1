@@ -17,12 +17,6 @@ namespace PaintWars.FPS.Gameplay
         [Tooltip("Lifetime of the projectile")]
         public float MaxLifeTime = 5f;
         [Tooltip("VFX prefab to spawn upon impact")]
-        public GameObject ImpactVfx;
-        [Tooltip("LifeTime of the VFX before being destroyed")]
-        public float ImpactVfxLifetime = 5f;
-        [Tooltip("Offset along the hit normal where the VFX will be spawned")]
-        public float ImpactVfxSpawnOffset = 0.1f;
-        [Tooltip("Layers this projectile can collide with")]
         public LayerMask HittableLayers = -1;
         [Header("Movement")]
         [Tooltip("Speed of the projectile")]
@@ -75,6 +69,7 @@ namespace PaintWars.FPS.Gameplay
 
             // Handle case of player shooting (make projectiles not go through walls, and remember center-of-screen trajectory)
             PlayerWeaponsManager playerWeaponsManager = m_ProjectileBase.Owner.GetComponent<PlayerWeaponsManager>();
+            Debug.Log("enemy tried shooting");
             if (playerWeaponsManager)
             {
                 m_HasTrajectoryOverride = true;
@@ -93,6 +88,19 @@ namespace PaintWars.FPS.Gameplay
                 }
                 if (Physics.Raycast(playerWeaponsManager.WeaponCamera.transform.position, cameraToMuzzle.normalized,
                     out RaycastHit hit, cameraToMuzzle.magnitude, HittableLayers, k_TriggerInteraction))
+                {
+                    if (IsHitValid(hit))
+                    {
+                        OnHit(hit.point, hit.normal, hit.collider);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("Enemy shoot");
+                Enemy enemy = m_ProjectileBase.Owner.GetComponent<Enemy>();
+                if (Physics.Raycast(enemy.transform.position, enemy.enemyToPlayerShotDirection,
+                    out RaycastHit hit, enemy.enemyToPlayerShotDirection.magnitude * 2, HittableLayers, k_TriggerInteraction))
                 {
                     if (IsHitValid(hit))
                     {
@@ -178,6 +186,7 @@ namespace PaintWars.FPS.Gameplay
 
         bool IsHitValid(RaycastHit hit)
         {
+            Debug.Log("shoot ray hit");
             // ignore hits with an ignore comoponent
             if (hit.collider.GetComponent<IgnoreHitDetection>())
             {
@@ -217,7 +226,7 @@ namespace PaintWars.FPS.Gameplay
                     damageable.InflictDamage(Damage, false, m_ProjectileBase.Owner);
                 }
             }
-
+            Debug.Log("found hit");
             Destroy(this.gameObject);
         }
 
